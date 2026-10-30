@@ -1,0 +1,62 @@
+seed: 42
+data:
+  metadata_path: data/metadata.csv
+  smiles_column: smiles
+  split_column: split
+  train_split: train
+  valid_split: valid
+  test_split: test
+  target_columns:
+  - D
+  kfolds: 1
+  fold_index: 1
+  valid_fraction: 0.2
+  stratify_bins: 10
+  normalization: mean_mad
+  log_transform_columns: []
+  auto_log_h50: false
+  batch_size: 32
+  num_workers: 0
+  max_seq_len: 256
+  augmentation_enabled: false
+  augmentation_num_randomizations: 1
+  augmentation_include_canonical: true
+  augmentation_deduplicate: true
+  augmentation_random_seed: 42
+model:
+  d_model: 256
+  nhead: 8
+  num_layers: 6
+  dim_feedforward: 768
+  dropout: 0.1
+  head_type: residual
+  reg_hidden: null
+  lr: 1.0e-05
+  weight_decay: 0.0
+  scheduler_factor: 0.5
+  scheduler_patience: 5
+  loss_name: mse
+pretrained:
+  checkpoint: ''
+  tokenizer_path: ''
+  freeze_backbone: false
+trainer:
+  max_epochs: 1000
+  accelerator: gpu
+  devices:
+  - 0
+  strategy: auto
+  precision: 32-true
+  gradient_clip_val: 1.0
+  log_every_n_steps: 10
+  deterministic: true
+  enable_progress_bar: true
+  enable_model_summary: true
+  default_root_dir: outputs/predictor/D
+  dataset_name: molecules
+  run_name: gpt
+  monitor: val_rmse
+  monitor_mode: min
+  use_early_stopping: true
+  early_stopping_patience: 20
+  early_stopping_min_delta: 0.0001

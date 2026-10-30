@@ -1,0 +1,66 @@
+seed: 42
+data:
+  metadata_path: data/metadata.csv
+  graph_cache_dir: data/graph_cache
+  molecule_id_column: molecule_id
+  smiles_column: smiles
+  split_column: split
+  train_split: train
+  valid_split: valid
+  test_split: test
+  target_columns:
+  - D
+  normalization: mean_mad
+  batch_size: 32
+  num_workers: 0
+  max_seq_len: 256
+graph_model:
+  max_atom_type: 100
+  charge_power: 2
+  hidden_dim: 128
+  n_layers: 7
+  attention: true
+  no_edge_types: false
+  layernorm: false
+  cutoff: 1.6
+  node_feature_dim: 0
+  graph_feature_dim: 0
+  head_dropout: 0.1
+smiles_model:
+  d_model: 256
+  n_heads: 8
+  n_layers: 6
+  ffn_hidden: 768
+  dropout: 0.1
+  pooling: mean
+pretrained:
+  backbone_checkpoint: ''
+  graph_checkpoint: outputs/predictor/D/graph/checkpoints/best_model.pt
+  smiles_checkpoint: outputs/predictor/D/gpt/checkpoints/best.ckpt
+  tokenizer_path: outputs/predictor/D/gpt/tokenizer.json
+model:
+  graph_encoder_type: 3d
+  smiles_backbone_type: gpt_regression
+  model_dim: 256
+  n_heads: 8
+  n_layers: 6
+  ff_hidden: 768
+  head_type: residual
+  reg_hidden: null
+  dropout: 0.1
+  lr: 0.0001
+  weight_decay: 0.0001
+  loss_name: mse
+trainer:
+  accelerator: gpu
+  devices:
+  - 0
+  strategy: auto
+  max_epochs: 500
+  early_stopping_patience: 40
+  monitor: val_rmse
+  monitor_mode: min
+  dataset_name: molecules
+  run_name: multimodal
+  default_root_dir: outputs/predictor/D
+  early_stopping_min_delta: 0.0

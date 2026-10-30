@@ -1,0 +1,92 @@
+seed: 42
+data:
+  metadata_path: data/metadata.csv
+  graph_cache_dir: data/graph_cache
+  molecule_id_column: molecule_id
+  smiles_column: smiles
+  split_column: split
+  train_split: train
+  valid_split: valid
+  test_split: test
+  target_columns:
+  - D
+  normalization: mean_mad
+  batch_size: 256
+  num_workers: 0
+  max_seq_len: 256
+  augmentation_enabled: true
+  augmentation_stage1: true
+  augmentation_stage2: false
+  augmentation_num_randomizations: 200
+  augmentation_include_canonical: true
+  augmentation_deduplicate: true
+  augmentation_random_seed: 42
+teacher:
+  multimodal_run_dir: ''
+  multimodal_artifacts_dir: outputs/predictor/D/multimodal
+  multimodal_checkpoint: outputs/predictor/D/multimodal/checkpoints/best_model.pt
+student_init:
+  smiles_run_dir: ''
+  smiles_artifacts_dir: outputs/predictor/D/gpt
+  smiles_checkpoint: outputs/predictor/D/gpt/checkpoints/best.ckpt
+student_type: gpt_regression
+student_model:
+  d_model: 256
+  n_heads: 8
+  n_layers: 6
+  ffn_hidden: 768
+  dropout: 0.1
+  pooling: mean
+  lr: 0.0001
+  weight_decay: 0.01
+  warmup_steps: 0
+alignment:
+  projection_dim: 256
+  projection_type: residual
+  projection_dropout: 0.1
+  projection_norm: true
+  temperature: 0.01
+  loss_name: hybrid
+  contrastive_ignore_same_molecule_negatives: true
+  contrastive_weight: 1.0
+  embedding_distill_weight: 1.0
+  cosine_distill_weight: 1.0
+  l1_weight: 0.0
+  smooth_l1_weight: 0.0
+stage1:
+  enabled: true
+  max_epochs: 500
+  lr: 0.0001
+  weight_decay: 0.0001
+  train_mode: encoder_proj
+  freeze_backbone: false
+  monitor: val_alignment_loss
+  monitor_mode: min
+  use_early_stopping: true
+  early_stopping_patience: 20
+  early_stopping_min_delta: 0.0
+stage2:
+  enabled: false
+  max_epochs: 500
+  lr: 0.0003
+  weight_decay: 0.0001
+  train_mode: head_only
+  loss_name: mse
+  freeze_backbone: true
+  monitor: val_rmse
+  monitor_mode: min
+trainer:
+  max_epochs: 200
+  accelerator: gpu
+  devices:
+  - 0
+  strategy: auto
+  gradient_clip_val: 1.0
+  log_every_n_steps: 10
+  default_root_dir: outputs/predictor/D
+  dataset_name: molecules
+  run_name: alignment
+  use_early_stopping: true
+  early_stopping_patience: 20
+  cache_teacher_outputs: true
+  monitor: val_rmse

@@ -1,0 +1,9 @@
+python predictor/3D_GNN/script/build_finetune_npz_from_metadata.py --metadata_path data/processed/qmodel_778_recovered/metadata_with_bde.csv --output_dir predictor/3D_GNN/data/778_nonmdn_q_bde --target_columns Q BDE
+
+python predictor/3D_GNN/script/finetune_property.py --config_path predictor/3D_GNN/config/finetune_778_property.yml --property Q
+
+python qmodel_monitor/evaluate_qmodel_finetune_checkpoint.py --config_path predictor/3D_GNN/config/finetune_778_property.yml --checkpoint predictor/3D_GNN/outputs/non_mdn_finetune_778/energetic_778/Q/checkpoint_best.pth --property Q --output_dir predictor/3D_GNN/outputs/non_mdn_finetune_778/energetic_778/Q/eval_best
+
+python predictor/3D_GNN/script/finetune_property.py --config_path predictor/3D_GNN/config/finetune_778_property.yml --property BDE
+
+python qmodel_monitor/evaluate_qmodel_finetune_checkpoint.py --config_path predictor/3D_GNN/config/finetune_778_property.yml --checkpoint predictor/3D_GNN/outputs/non_mdn_finetune_778/energetic_778/BDE/checkpoint_best.pth --property BDE --output_dir predictor/3D_GNN/outputs/non_mdn_finetune_778/energetic_778/BDE/eval_best

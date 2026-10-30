@@ -1,0 +1,33 @@
+train:
+  batch_size: 2
+  seed: 2021
+  epochs: 300
+  num_workers: 4
+  restore_path: predictor/3D_GNN/checkpoints/checkpoint-3dinfomax
+  save_path: checkpoints/finetune/qm9
+  log_interval: 20
+  lr: 0.0005
+  property: ddec_charges
+  weight_decay: 1e-16
+  min_lr: 0.000001
+
+test:
+  test_interval: 1
+
+data:
+  base_path: predictor/3D_GNN/data/778Q #your data path
+
+
+model:
+  name: qm9
+  hidden_dim: 128
+  attention: true
+  n_layers: 7
+  max_atom_type: 100
+  charge_power: 2
+  cutoff: 5.0
+  no_edge_types: False
+  layernorm: False
+
+
+

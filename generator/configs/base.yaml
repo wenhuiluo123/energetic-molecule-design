@@ -1,0 +1,32 @@
+seed: 42
+cpu_threads: 8
+pretrained_checkpoint: ''
+data:
+  csv: data/smiles_combined.csv
+  smiles_column: smiles
+  vocab_path: ''
+  train_ratio: 0.8
+  num_augmentations: 1
+  batch_size: 256
+  num_workers: 0
+model:
+  max_seq_len: 256
+  d_model: 256
+  nhead: 8
+  num_layers: 6
+  dim_feedforward: 1024
+  dropout: 0.1
+  lr: 0.001
+early_stopping:
+  enabled: true
+  monitor: val_loss
+  mode: min
+  patience: 10
+  min_delta: 0.001
+trainer:
+  output_dir: outputs/generator
+  max_epochs: 1000
+  accelerator: gpu
+  devices: [0, 1]
+  strategy: ddp
+  precision: 32-true

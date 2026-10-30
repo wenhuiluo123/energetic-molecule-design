@@ -1,0 +1,54 @@
+seed: 42
+data:
+  metadata_path: data/metadata.csv
+  graph_cache_dir: data/graph_cache
+  molecule_id_column: molecule_id
+  smiles_column: smiles
+  split_column: split
+  train_split: train
+  valid_split: valid
+  test_split: test
+  target_columns:
+  - D
+  graph_feature_columns: []
+  node_feature_key: null
+  normalization: mean_mad
+  batch_size: 32
+  num_workers: 0
+model:
+  max_atom_type: 100
+  charge_power: 2
+  hidden_dim: 128
+  n_layers: 7
+  attention: true
+  no_edge_types: false
+  layernorm: false
+  cutoff: 1.6
+  node_feature_dim: 0
+  graph_feature_dim: 0
+  lr: 0.0005
+  weight_decay: 1.0e-16
+  min_lr: 1.0e-06
+  freeze_encoder: false
+  loss_name: l1
+  head_type: qstyle
+pretrained:
+  graph_checkpoint: predictor/3D_GNN/checkpoints/checkpoint-3dmgp
+trainer:
+  max_epochs: 400
+  accelerator: gpu
+  devices:
+  - 0
+  strategy: auto
+  precision: 32-true
+  gradient_clip_val: 1.0
+  log_every_n_steps: 10
+  deterministic: true
+  default_root_dir: outputs/predictor/D
+  dataset_name: molecules
+  run_name: graph
+  monitor: val_rmse
+  monitor_mode: min
+  use_early_stopping: true
+  early_stopping_patience: 40
+  early_stopping_min_delta: 0.0

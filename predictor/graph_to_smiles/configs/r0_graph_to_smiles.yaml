@@ -1,0 +1,100 @@
+seed: 42
+data:
+  metadata_path: data/metadata.csv
+  graph_cache_dir: data/graph_cache
+  molecule_id_column: molecule_id
+  smiles_column: smiles
+  split_column: split
+  train_split: train
+  valid_split: valid
+  test_split: test
+  target_columns:
+  - r0
+  graph_feature_columns: []
+  graph_feature_prefixes: []
+  node_feature_key: null
+  normalization: mean_mad
+  batch_size: 256
+  num_workers: 0
+  max_seq_len: 256
+  smiles_randomize_train: true
+  smiles_randomize_stage1: true
+  smiles_randomize_stage2: false
+  smiles_randomize_prob: 1.0
+  smiles_randomize_multiplier: 100
+  smiles_randomize_validate: true
+  smiles_randomize_fail_on_error: false
+teacher:
+  checkpoint: outputs/predictor/r0/graph/checkpoints/best_model.pt
+teacher_model:
+  max_atom_type: 100
+  charge_power: 2
+  hidden_dim: 128
+  n_layers: 7
+  attention: true
+  no_edge_types: false
+  layernorm: false
+  cutoff: 1.6
+  node_feature_dim: 0
+  graph_feature_dim: 0
+  lr: 0.0005
+  weight_decay: 1.0e-16
+  min_lr: 1.0e-06
+  freeze_encoder: true
+  loss_name: mse
+student_type: rl_gpt
+student_model:
+  d_model: 256
+  n_heads: 8
+  n_layers: 6
+  ffn_hidden: 768
+  dropout: 0.1
+  pooling: mean
+  head_type: gelu
+  reg_hidden: null
+student_pretrained:
+  smiles_checkpoint: outputs/predictor/r0/gpt/checkpoints/best.ckpt
+  tokenizer_path: outputs/predictor/r0/gpt/tokenizer.json
+distill:
+  stage1_alignment: hybrid
+  contrastive_weight: 1.0
+  contrastive_ignore_same_molecule_negatives: true
+  supervised_weight: 1.0
+  prediction_distill_weight: 1.0
+  embedding_distill_weight: 1.0
+  cosine_distill_weight: 0.5
+  temperature: 0.005
+  stage2_prediction_distill_weight: 0.5
+  stage2_embedding_distill_weight: 0.0
+  supervised_loss_name: mse
+  prediction_distill_loss_name: mse
+  embedding_distill_loss_name: mse
+optimizer:
+  lr: 0.0005
+  stage1_lr: 0.0001
+  stage2_lr: 0.0005
+  weight_decay: 0.01
+  stage1_train_mode: all
+  stage2_train_mode: all
+  stage2_train_head_only: true
+trainer:
+  accelerator: gpu
+  devices:
+  - 0
+  strategy: auto
+  stage1_epochs: 600
+  stage2_epochs: 600
+  stage1_early_stopping_patience: 10
+  stage1_monitor: val_stage1_loss
+  stage1_monitor_mode: min
+  stage2_early_stopping_patience: 20
+  stage2_monitor: val_rmse
+  stage2_monitor_mode: min
+  early_stopping_min_delta: 0.0
+  load_stage1_best_for_stage2: true
+  dataset_name: molecules
+  run_name: graph_to_smiles
+  default_root_dir: outputs/predictor/r0
+  stage2_enabled: true
+  cache_teacher_outputs: true
+  monitor: val_rmse
