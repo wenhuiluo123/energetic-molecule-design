@@ -1,4 +1,4 @@
-# Molecular Design
+# Energetic Molecule Design
 
 Research code for Transformer-based molecular generation and property prediction, including generator pretraining and fine-tuning, 3D graph and SMILES representations, multimodal fusion, knowledge distillation, and reinforcement learning.
 
