@@ -38,7 +38,13 @@ def compute_combined_reward(
     rho_norm = density / 2.0
     reward = w_d * d_norm - w_sa * sa_norm + w_rho * rho_norm
     if enable_bonus:
-        d_bonus = 1.0 if detonation_velocity > 8.5 else 0.0
+        if detonation_velocity > 9.0:
+            d_bonus = 2.0
+        elif detonation_velocity > 8.5:
+            d_bonus = 1.0
+        else:
+            d_bonus = 0.0
+            
         rho_bonus = 1.0 if density > 1.8 else 0.0
         reward = reward + d_bonus + rho_bonus
     return reward
