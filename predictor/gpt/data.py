@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import torch
 from rdkit import Chem
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from torch.utils.data import DataLoader, Dataset
 import lightning.pytorch as pl
 from predictor.common.paths import normalize_path_string
@@ -32,10 +31,6 @@ class RLGPTRegDataConfig:
     valid_split: str = 'valid'
     test_split: str = 'test'
     target_columns: list[str] | None = None
-    kfolds: int = 1
-    fold_index: int = 1
-    valid_fraction: float = 0.2
-    stratify_bins: int = 10
     normalization: str = 'zscore'
     log_transform_columns: list[str] | None = None
     auto_log_h50: bool = True
@@ -226,47 +221,19 @@ class RLGPTRegDataModule(pl.LightningDataModule):
             raise RuntimeError('DataModule.setup() must be called before reading vocab_size')
         return len(self.tokenizer.vocab)
 
-    def _split_without_split_column(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        if self.cfg.kfolds <= 1:
-            (train_df, valid_df) = train_test_split(df, test_size=self.cfg.valid_fraction, random_state=42, shuffle=True)
-            return (train_df.copy(), valid_df.copy(), valid_df.copy())
-        first_target = self.cfg.target_columns[0]
-        values = df[first_target].astype(float).to_numpy()
-        bins = min(max(2, int(self.cfg.stratify_bins)), len(np.unique(values)))
-        try:
-            if bins > 1:
-                y_bins = pd.qcut(values, q=bins, duplicates='drop', labels=False)
-            else:
-                y_bins = np.zeros(len(df), dtype=int)
-            splitter = StratifiedKFold(n_splits=self.cfg.kfolds, shuffle=True, random_state=42)
-            folds = list(splitter.split(df, y_bins))
-        except ValueError:
-            splitter = KFold(n_splits=self.cfg.kfolds, shuffle=True, random_state=42)
-            folds = list(splitter.split(df))
-        fold_idx = min(max(1, int(self.cfg.fold_index)), len(folds)) - 1
-        (train_idx, valid_idx) = folds[fold_idx]
-        train_df = df.iloc[train_idx].copy()
-        valid_df = df.iloc[valid_idx].copy()
-        return (train_df, valid_df, valid_df.copy())
-
     def setup(self, stage: str | None=None) -> None:
         if not self.cfg.target_columns:
             raise ValueError('data.target_columns cannot be empty')
         df = pd.read_csv(normalize_path_string(self.cfg.metadata_path))
-        required = {self.cfg.smiles_column, *self.cfg.target_columns}
+        required = {self.cfg.smiles_column, self.cfg.split_column, *self.cfg.target_columns}
         missing = required - set(df.columns)
         if missing:
             raise ValueError(f'metadata CSV is missing required columns: {sorted(missing)}')
         df = df.dropna(subset=[self.cfg.smiles_column, *self.cfg.target_columns]).reset_index(drop=True)
         split_col = self.cfg.split_column
-        if split_col and split_col in df.columns:
-            train_df = df[df[split_col] == self.cfg.train_split].copy()
-            valid_df = df[df[split_col] == self.cfg.valid_split].copy()
-            test_df = df[df[split_col] == self.cfg.test_split].copy()
-            if len(test_df) == 0:
-                test_df = valid_df.copy()
-        else:
-            (train_df, valid_df, test_df) = self._split_without_split_column(df)
+        train_df = df[df[split_col] == self.cfg.train_split].copy()
+        valid_df = df[df[split_col] == self.cfg.valid_split].copy()
+        test_df = df[df[split_col] == self.cfg.test_split].copy()
         if len(train_df) == 0:
             raise ValueError('train split is empty')
         if len(valid_df) == 0:
@@ -305,6 +272,6 @@ class RLGPTRegDataModule(pl.LightningDataModule):
         with open(save_dir / 'stats.json', 'w', encoding='utf-8') as f:
             json.dump(self.target_stats, f, ensure_ascii=False, indent=2)
         self.tokenizer.save_json(save_dir / 'tokenizer.json')
-        schema = {'metadata_path': self.cfg.metadata_path, 'tokenizer_path': self.cfg.tokenizer_path, 'smiles_column': self.cfg.smiles_column, 'split_column': self.cfg.split_column, 'target_columns': self.cfg.target_columns, 'normalization': self.cfg.normalization, 'max_seq_len': self.cfg.max_seq_len, 'kfolds': self.cfg.kfolds, 'fold_index': self.cfg.fold_index, 'augmentation': asdict(self.aug_cfg), 'train_size_raw': int(len(self.train_df_raw)), 'train_size_augmented': int(len(self.train_df)), 'valid_size': int(len(self.valid_df)), 'test_size': int(len(self.test_df)), 'vocab_size': int(self.vocab_size), 'pad_token_id': int(self.pad_idx), 'tokenizer_format': 'smiles_tokenizer'}
+        schema = {'metadata_path': self.cfg.metadata_path, 'tokenizer_path': self.cfg.tokenizer_path, 'smiles_column': self.cfg.smiles_column, 'split_column': self.cfg.split_column, 'target_columns': self.cfg.target_columns, 'normalization': self.cfg.normalization, 'max_seq_len': self.cfg.max_seq_len, 'augmentation': asdict(self.aug_cfg), 'train_size_raw': int(len(self.train_df_raw)), 'train_size_augmented': int(len(self.train_df)), 'valid_size': int(len(self.valid_df)), 'test_size': int(len(self.test_df)), 'vocab_size': int(self.vocab_size), 'pad_token_id': int(self.pad_idx), 'tokenizer_format': 'smiles_tokenizer'}
         with open(save_dir / 'data_schema.json', 'w', encoding='utf-8') as f:
             json.dump(schema, f, ensure_ascii=False, indent=2)
