@@ -1,4 +1,3 @@
-import load_dataset
 import torch
 from torch import nn, optim
 import argparse
@@ -72,12 +71,7 @@ def load_model(model, model_path):
     return new_dict
 
 
-batch_size = getattr(config.train, "batch_size", config.train.num_workers)
-dataloaders, charge_scale = dataset.retrieve_dataloaders(
-    config.data.base_path,
-    batch_size,
-    config.train.num_workers,
-)
+dataloaders, charge_scale = dataset.retrieve_dataloaders(config.data.base_path, config.train.batch_size, config.train.num_workers)
 # compute mean and mean absolute deviation
 meann, mad = qm9_utils.compute_mean_mad(dataloaders, config.train.property)
 
@@ -251,9 +245,10 @@ if __name__ == "__main__":
             all_val_loss.append(val_loss)
             all_test_loss.append(test_loss)
         # save current loss
-
+        
         loss_file = path + '/loss.pkl'
         with open(loss_file, 'wb') as f:
             pkl.dump((all_train_loss, all_val_loss, all_test_loss), f)
+
 
 

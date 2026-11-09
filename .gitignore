@@ -224,3 +224,10 @@ lightning_logs/
 *.ckpt
 *.pt
 *.pth
+
+# Vendored data preparation sources
+!predictor/3D_GNN/data/
+predictor/3D_GNN/data/**
+!predictor/3D_GNN/data/**/
+!predictor/3D_GNN/data/**/*.py
+!predictor/3D_GNN/data/filter_smiles.txt
